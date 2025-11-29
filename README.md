@@ -1,181 +1,292 @@
-Build a complete online programming contest platform called “Elunara” with the following full set of features and technologies.
+Build a fully functional online programming contest platform named “Elunara” with the following technologies and complete set of features.
 
+========================================
 1. TECHNOLOGY STACK
-
+========================================
 - Backend: Node.js + Express
-- Realtime: Socket.io (WebSockets)
-- Database: MySQL (for high concurrency and multi-user contests)
-- Queue/Workers: Node worker threads OR BullMQ-style job queue
-- Code Execution: Run C/C++ code using Linux process sandboxing (NO Docker)
-    - ulimit, non-root, isolated temp directory per submission
-- Frontend: HTML + CSS + JavaScript (or minimal React if needed)
+- Real-time: Socket.io
+- Database: MySQL
+- Asynchronous Judging Queue: Worker Threads or BullMQ-style queue
+- Code Execution: Linux process sandbox (NO Docker)
+- Frontend: HTML/CSS/JS (or React)
+- Authentication: JWT or sessions
 
-Optimized for an i5 4th Gen CPU with 16GB RAM, able to handle ~100 simultaneous submissions efficiently.
+Must run efficiently on:
+- Intel i5 4th Gen CPU
+- 16GB RAM
+- Linux environment
 
+========================================
+2. USER ROLES & ACCESS CONTROL
+========================================
 
-2. CORE FEATURES
+2.1 ADMIN
+- Admin login
+- Create & manage contests
+- Add/edit problems with testcases
+- Approve/reject user contest applications
+- Ban users (banned users cannot log in or participate)
+- Unban users
+- Remove users from contest
+- Hide/show leaderboard
+- Hide/show admin dashboard from users
+- View all submissions
+- See real-time submission stats
+- Apply penalties manually if needed
 
+2.2 USER
+- Register/login
+- Apply to join contest
+- Access problems ONLY AFTER approval
+- Test-run code safely before submission
+- Submit code for judging
+- View verdicts (AC, WA, TLE, RE, CE, MAL)
+- View real-time leaderboard (if visible)
+- Check their own submission history
 
-2.1 ADMIN FEATURES
-- Create contests (title, start/end time, registration status)
-- Add problems:
-  - Title
-  - Description (Markdown)
-  - Difficulty
-  - Points
-  - Testcases (input/output)
-- View registered users
-- View all submissions with verdicts and penalties
-- Monitor real-time leaderboard
+========================================
+3. CONTEST WORKFLOW
+========================================
+- Users must apply to join contests.
+- Admin approves before they can solve problems.
+- Contest has:
+  - Name
+  - Description
+  - Start & end time
+  - Registration status
+  - Leaderboard visibility toggle
 
-2.2 USER FEATURES
-- Register/login securely
-- Register for contests
-- View contest problems (after registration)
-- Submit C/C++ code
-- Test code with custom input (pre-submission test-run)
-- View submission results: AC, WA, TLE, RE, CE
-- Real-time leaderboard updates via WebSockets
-- Malicious code penalties (-100 points)
+========================================
+4. CODE JUDGING SYSTEM (NO DOCKER)
+========================================
 
+4.1 Compilation
+- Use gcc/g++:
+    g++ -O2 -std=c++17 program.cpp -o program
 
-3. CODE JUDGING SYSTEM
-
-
-3.1 Compilation & Execution
-- Use gcc/g++ on the OS
-- Save each submission in a temporary folder
-- Compile:
-    g++ -O2 -std=c++17 -o program program.cpp
-- Run:
-    ./program < input.txt
-
-3.2 Sandbox
-- No Docker
-- Use Linux process restrictions:
-  - ulimit -t 2           (CPU time limit)
-  - ulimit -v 262144      (256MB memory limit)
-  - ulimit -f 65536       (max output)
-- Run as non-root user
-- Use isolated temp directories
-- Kill process if execution exceeds time limit
+4.2 Execution Sandbox
+- NO Docker
+- Use Linux process controls:
+    ulimit -t 2           (CPU time)
+    ulimit -v 262144      (256 MB RAM)
+    ulimit -f 65536       (max output)
+- Run under restricted non-root user
+- Isolated temp directory per submission
 - No network access
 
-3.3 Malicious Code Detection
-- Penalize or reject submissions with:
-  - system(), fork(), exec()
-  - #include <unistd.h>, #include <sys/>
-  - Dangerous shell commands (rm, kill, shutdown, etc.)
-- Apply -100 points penalty if malicious
+4.3 Infinite Loop Detection
+Detect infinite loops using:
 
+A. **CPU time limit exceeded (TLE)**  
+   If process hits ulimit -t or is still running after time limit → treat as infinite loop.
 
-4. PERFORMANCE REQUIREMENTS
+B. **Instruction limit check via /proc/\<pid\>/stat**  
+   If instructions increase without producing output → identify infinite loop.
 
-- Async job queue with worker pool (8–16 workers)
-- Tiny programs (<50 lines) must finish <100ms
-- 100 submissions complete ~1–2 seconds total
-- MySQL handles concurrent writes efficiently
-- In-memory cache for leaderboard to avoid DB bottleneck
-- WebSocket updates every 50–100ms
+C. **Runtime watchdog timer**  
+   Kill process if:
+   - Running continuously
+   - No data written to stdout/stderr for N milliseconds
+   → classify as harmful loop
 
+If infinite loop detected:
+- verdict = “MAL (Harmful — Infinite Loop)”
+- penalty = -100 points
 
-5. DATABASE (MySQL)
+========================================
+5. MALICIOUS CODE DETECTION
+========================================
 
+5.1 Forbidden Keywords
+Reject or penalize code containing:
+- system()
+- fork()
+- exec()
+- popen()
+- mmap(…)
+- #include <unistd.h>
+- #include <sys/>
+- asm volatile
+- access to forbidden filepaths (/, /etc/, /home/, etc.)
+- Attempts to spawn child processes
+- Writing outside temp directory
+- Dangerous shell commands:
+  rm, reboot, shutdown, kill, chmod, chown, mv, wget, curl
 
-Tables:
+5.2 Harmful Code Behavior
+If suspicious behavior detected:
+- Infinite loop (logic bombs)
+- Excessive memory usage
+- Excessive output flooding
+- Attempt to run external programs
+- Attempt to escape sandbox
 
-1. users
-- id (PK)
+→ verdict = MAL  
+→ penalty = -100 points  
+→ submission blocked  
+
+========================================
+6. VERDICTS
+========================================
+
+- **AC** — Accepted  
+- **WA** — Wrong Answer  
+- **TLE** — Time Limit Exceeded  
+- **RE** — Runtime Error  
+- **CE** — Compilation Error  
+- **MAL** — Malicious/Harmful Code (includes infinite loops)  
+
+========================================
+7. PERFORMANCE GOALS
+========================================
+- 8–16 worker threads
+- Handle 100 simultaneous submissions
+- Compile time < 50ms for small code
+- Execution < 30ms
+- MySQL write < 5ms
+- Leaderboard update < 20ms
+- Real-time WebSockets push every 50–100ms
+- Judge 100 submissions in ~1–2 seconds total
+
+========================================
+8. REAL-TIME SYSTEM (WebSockets)
+========================================
+
+Socket.io events:
+- submissionResult → send submission verdict instantly
+- leaderboardUpdate → send updated ranks
+- dashboardUpdate → admin-only live system stats
+- contestStatus → notify users of admin changes
+
+Features:
+- Leaderboard can be toggled visible/hidden by admin
+- Dashboard visible only to admin
+- Only diff updates sent to reduce bandwidth
+- Leaderboard cached in memory for speed
+
+========================================
+9. DATABASE SCHEMA (MYSQL)
+========================================
+
+TABLE: users
+- id
 - username
 - password_hash
-- total_score
+- banned (bool)
+- role (user/admin)
+- created_at
 
-2. contests
-- id (PK)
+TABLE: contests
+- id
 - title
+- description
 - start_time
 - end_time
 - registration_open (bool)
+- leaderboard_visible (bool)
+- created_at
 
-3. contest_registrations
-- id (PK)
-- user_id (FK)
-- contest_id (FK)
-- registration_time
+TABLE: contest_applications
+- id
+- user_id
+- contest_id
+- status (pending/approved/rejected)
+- applied_at
 
-4. problems
-- id (PK)
-- contest_id (FK)
+TABLE: problems
+- id
+- contest_id
 - title
 - statement
 - difficulty
 - points
 
-5. testcases
-- id (PK)
-- problem_id (FK)
+TABLE: testcases
+- id
+- problem_id
 - input
 - output
 
-6. submissions
-- id (PK)
-- user_id (FK)
-- problem_id (FK)
+TABLE: submissions
+- id
+- user_id
+- problem_id
 - code
 - language
 - verdict
 - score
 - penalty
 - runtime
-- submission_time
+- created_at
 
-7. test_runs (optional)
-- id (PK)
-- user_id (FK)
-- code
+TABLE: test_runs
+- id
+- user_id
 - input
 - output
 - runtime
 - verdict
 
 ========================================
-6. REAL-TIME FEATURES
+10. FRONTEND REQUIREMENTS
 ========================================
-- WebSockets via Socket.io
-- Leaderboard updates pushed in real-time
-- Only diffs sent, batched every 50–100ms
-- Leaderboard cached in memory for speed
-- Admin dashboard real-time monitoring
 
-7. FRONTEND
-
-Pages:
+User interface:
 - Login/Register
-- Contest List
-- Contest Registration
-- Problem List & View
-- Code Editor (Monaco or textarea)
-- Test Run Console
-- Submission Results
-- Real-Time Leaderboard
+- Contest list
+- Apply to join contest
+- Wait for approval page
+- Problem list
+- Problem detail page
+- Code editor with syntax highlighting
+- Test-run console
+- Submission results page
+- Real-time leaderboard page
 
+Admin interface:
+- Admin login
+- Contest manager
+- User application approval panel
+- Add/edit problems
+- Add/edit testcases
+- All submissions overview
+- Ban/unban users
+- Toggle leaderboard visibility
+- Toggle dashboard visibility
+- Real-time admin dashboard
 
-8. DELIVERABLES
+========================================
+11. DELIVERABLES
+========================================
+Deliver a complete running project with:
 
-- Backend:
-  - Express routes, authentication
-  - Submission queue and worker pool
-  - Safe C/C++ sandbox execution
-  - Malicious code detection
-  - Leaderboard manager
-- Frontend:
-  - Contest pages, code editor, test-run console
-  - Real-time leaderboard UI
-- Database:
-  - MySQL schema and migrations
-  - Foreign keys and indexes for performance
-- Real-time:
-  - Socket.io server for updates
-- Performance:
-  - Worker pool for ~100 simultaneous submissions
-  - Fast leaderboard and submission handling
+BACKEND:
+- All API routes
+- Authentication
+- Admin permission system
+- User apply/approval system
+- Ban/unban system
+- MySQL models
+- Code sandbox runner
+- Infinite loop detection
+- Malicious code detection
+- Submission queue & workers
+- Leaderboard engine
+
+FRONTEND:
+- All UI pages
+- Code editor page
+- Admin panel
+- Test-run interface
+- Leaderboard UI
+
+REAL-TIME:
+- Socket.io event system
+- Admin-only metrics
+- Leaderboard & result pushes
+
+SYSTEM:
+- Worker pool
+- Logging
+- Config
+- Temp folder cleanup
