@@ -1,5 +1,83 @@
 Build a fully functional online programming contest platform named “Elunara” with the following technologies and complete set of features.
 
+file structure should:
+
+elunara/
+├── backend/
+│   ├── config/
+│   │   ├── db.js
+│   │   └── jwt.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── contestController.js
+│   │   ├── problemController.js
+│   │   ├── submissionController.js
+│   │   └── adminController.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── roleGuard.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Contest.js
+│   │   ├── Problem.js
+│   │   ├── Submission.js
+│   │   └── index.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── contests.js
+│   │   ├── problems.js
+│   │   ├── submissions.js
+│   │   └── admin.js
+│   ├── services/
+│   │   ├── sandbox/
+│   │   │   ├── execute.js
+│   │   │   ├── detectMalicious.js
+│   │   │   └── utils.js
+│   │   ├── queue/
+│   │   │   └── judgeQueue.js
+│   │   └── leaderboard.js
+│   ├── utils/
+│   │   └── tempCleanup.js
+│   ├── workers/
+│   │   └── judgeWorker.js
+│   ├── sockets/
+│   │   └── index.js
+│   ├── .env.example
+│   └── server.js
+├── frontend/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── CodeEditor.jsx
+│   │   │   ├── Leaderboard.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── pages/
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── ContestList.jsx
+│   │   │   ├── ContestDetail.jsx
+│   │   │   ├── ProblemPage.jsx
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   └── LeaderboardPage.jsx
+│   │   ├── services/
+│   │   │   ├── api.js
+│   │   │   └── socket.js
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── package.json
+│   └── .env.local
+├── sql/
+│   └── schema.sql
+├── deploy/
+│   ├── setup-sandbox-user.sh
+│   └── systemd-elunara.service
+├── .gitignore
+├── package.json
+├── README.md
+└── LICENSE
+
+
 ========================================
 1. TECHNOLOGY STACK
 ========================================
