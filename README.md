@@ -1,8 +1,7 @@
 Build a complete online programming contest platform called “Elunara” with the following full set of features and technologies.
 
-========================================
 1. TECHNOLOGY STACK
-========================================
+
 - Backend: Node.js + Express
 - Realtime: Socket.io (WebSockets)
 - Database: MySQL (for high concurrency and multi-user contests)
@@ -13,9 +12,9 @@ Build a complete online programming contest platform called “Elunara” with t
 
 Optimized for an i5 4th Gen CPU with 16GB RAM, able to handle ~100 simultaneous submissions efficiently.
 
-========================================
+
 2. CORE FEATURES
-========================================
+
 
 2.1 ADMIN FEATURES
 - Create contests (title, start/end time, registration status)
@@ -39,9 +38,9 @@ Optimized for an i5 4th Gen CPU with 16GB RAM, able to handle ~100 simultaneous 
 - Real-time leaderboard updates via WebSockets
 - Malicious code penalties (-100 points)
 
-========================================
+
 3. CODE JUDGING SYSTEM
-========================================
+
 
 3.1 Compilation & Execution
 - Use gcc/g++ on the OS
@@ -69,9 +68,9 @@ Optimized for an i5 4th Gen CPU with 16GB RAM, able to handle ~100 simultaneous 
   - Dangerous shell commands (rm, kill, shutdown, etc.)
 - Apply -100 points penalty if malicious
 
-========================================
+
 4. PERFORMANCE REQUIREMENTS
-========================================
+
 - Async job queue with worker pool (8–16 workers)
 - Tiny programs (<50 lines) must finish <100ms
 - 100 submissions complete ~1–2 seconds total
@@ -79,9 +78,9 @@ Optimized for an i5 4th Gen CPU with 16GB RAM, able to handle ~100 simultaneous 
 - In-memory cache for leaderboard to avoid DB bottleneck
 - WebSocket updates every 50–100ms
 
-========================================
+
 5. DATABASE (MySQL)
-========================================
+
 
 Tables:
 
@@ -148,9 +147,8 @@ Tables:
 - Leaderboard cached in memory for speed
 - Admin dashboard real-time monitoring
 
-========================================
 7. FRONTEND
-========================================
+
 Pages:
 - Login/Register
 - Contest List
@@ -161,9 +159,9 @@ Pages:
 - Submission Results
 - Real-Time Leaderboard
 
-========================================
+
 8. DELIVERABLES
-========================================
+
 - Backend:
   - Express routes, authentication
   - Submission queue and worker pool
